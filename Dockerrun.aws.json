@@ -1,5 +1,5 @@
 {
-  "AWSEBDockerrunVersion": "2",
+  "AWSEBDockerrunVersion": "1",
   "Image": {
     "Name": "166763368155.dkr.ecr.eu-west-1.amazonaws.com/uporold-cart-api:latest",
     "Update": "true"
