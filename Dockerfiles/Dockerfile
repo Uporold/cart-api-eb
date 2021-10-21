@@ -1,5 +1,5 @@
 # Base
-FROM node:14-alpine AS base
+FROM node:14.18.1-alpine3.14 AS base
 WORKDIR /app
 
 # Dependencies
@@ -13,15 +13,19 @@ COPY tsconfig*.json ./
 COPY src ./src
 RUN npm run build
 
-# Production
-FROM mhart/alpine-node:14 AS release
+# Production packages
+FROM node:14.18.1-alpine3.14 AS production-packages
+RUN apk add curl bash
 WORKDIR /app
-RUN addgroup -g 1000 -S kek && \
-    adduser -u 1000 -S kek -G kek
-USER kek
-COPY --chown=kek:kek --from=dependencies /app/package*.json ./
-COPY --chown=kek:kek --from=build /app/dist ./dist
-USER root
+RUN curl -sfL https://install.goreleaser.com/github.com/tj/node-prune.sh | bash -s -- -b /bin
+COPY --chown=node:node --from=dependencies /app/package*.json ./
 RUN npm ci --only=production && npm cache clean --force
+RUN /bin/node-prune
+
+# Production
+FROM uporold/alpine-node-lite:14.18.1-alpine3.14 AS release
+WORKDIR /app
+COPY --chown=node:node --from=production-packages /app/node_modules ./node_modules
+COPY --chown=node:node --from=build /app/dist ./dist
 EXPOSE 4000
 CMD ["node", "dist/main.js"]
